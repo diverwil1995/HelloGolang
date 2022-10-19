@@ -15,10 +15,10 @@ type Appointment struct {
 
 var appoint2 []Appointment
 
-func booking() {
-	t, _ := time.Parse("2006-01-02", "2022-10-19")
-	appoint2 = append(appoint2, Appointment{Username: "Wilson", Date: t}, Appointment{Username: "Tony", Date: t})
-}
+// func booking() {
+// 	t, _ := time.Parse("2006-01-02", "2022-10-19")
+// 	appoint2 = append(appoint2, Appointment{Username: "Wilson", Date: t}, Appointment{Username: "Tony", Date: t})
+// }
 
 func main() {
 	// Create a database named "DEMO.db" in your current directory.
@@ -43,20 +43,26 @@ func main() {
 	db.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		b := tx.Bucket([]byte("Appointments"))
-
+		// Loop all keys, values turn into (string), (time.Time) and append to appoint2
 		b.ForEach(func(k, v []byte) error {
-			fmt.Printf("key=%s, value=%s\n", k, v)
+			t, err := time.Parse("2006-01-02", string(v))
+			if err != nil {
+				return err
+			}
+			appoint2 = append(appoint2, Appointment{Username: string(k), Date: t})
 			return nil
 		})
+		fmt.Printf("從資料庫倒出來的預約記錄：%s", appoint2)
 		return nil
 	})
 	// Book two sample dates.
-	booking()
+	// booking()
 
 	// Store all appointments to "DEMO.db/Appointments"
 	for _, a := range appoint2 {
 		db.Update(func(tx *bolt.Tx) error {
 			b := tx.Bucket([]byte("Appointments"))
+			// b.Put([]byte(key),[]byte(value))
 			err := b.Put([]byte(a.Username), []byte(a.Date.Format("2006-01-02")))
 			return err
 		})
